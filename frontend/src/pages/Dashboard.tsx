@@ -5,10 +5,17 @@ import { GaugeCard } from "@/components/gauges/GaugeCard";
 import { TemperatureChart } from "@/components/charts/TemperatureChart";
 import { PressureChart } from "@/components/charts/PressureChart";
 import { AlertPanel } from "@/components/alerts/AlertPanel";
+import { RiskGauge } from "@/components/risk/RiskGauge";
+import { CyclePanel } from "@/components/cycles/CyclePanel";
+import { FuiteButton } from "@/components/fuites/FuiteButton";
 
 export function Dashboard() {
-  const latest  = useSensorStore((s) => s.latest);
-  const history = useSensorStore((s) => s.history);
+  const latest        = useSensorStore((s) => s.latest);
+  const history       = useSensorStore((s) => s.history);
+  const score         = useSensorStore((s) => s.score);
+  const niveauRisque  = useSensorStore((s) => s.niveauRisque);
+  const driftTemp     = useSensorStore((s) => s.driftTemp);
+  const driftPression = useSensorStore((s) => s.driftPression);
 
   useSensorData(8);
 
@@ -18,7 +25,13 @@ export function Dashboard() {
     <div className="flex flex-col gap-4 sm:gap-5">
       <h2 className="text-base font-bold text-primary-800">Mesures temps réel</h2>
 
-      {/* Jauges — 2 col mobile, 4 col desktop */}
+      {/* ── Indice de risque composite — indicateur principal ─────────────── */}
+      <RiskGauge score={score} niveau={niveauRisque} />
+
+      {/* ── Encart cycles et nettoyage mâchoires ─────────────────────────── */}
+      <CyclePanel />
+
+      {/* ── Jauges capteurs : 2 colonnes mobile, 4 colonnes desktop ─────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <GaugeCard
           label="Température"
@@ -27,6 +40,7 @@ export function Dashboard() {
           min={0}
           max={300}
           thresholdLow={120}
+          hasDrift={driftTemp}
         />
         <GaugeCard
           label="Pression"
@@ -36,6 +50,7 @@ export function Dashboard() {
           max={10}
           thresholdLow={3.5}
           colorOk="#F5A623"
+          hasDrift={driftPression}
         />
         <GaugeCard
           label="Humidité"
@@ -46,7 +61,7 @@ export function Dashboard() {
           colorOk="#185FA5"
         />
 
-        {/* Éclaboussure */}
+        {/* Capteur d'éclaboussure — booléen */}
         <div className="bg-panel rounded-2xl shadow-card p-3 sm:p-4 flex flex-col items-center justify-center gap-1.5 w-full">
           <div className={[
             "w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-300",
@@ -74,14 +89,17 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Alertes actives */}
+      {/* ── Alertes actives : seuils + dérives distingués visuellement ───── */}
       <AlertPanel />
 
-      {/* Courbes — 1 col mobile, 2 col desktop */}
+      {/* ── Courbes historiques sur 8h ────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <TemperatureChart data={history} />
         <PressureChart data={history} />
       </div>
+
+      {/* ── Outil responsable qualité — discret, en bas de page ─────────── */}
+      <FuiteButton />
     </div>
   );
 }

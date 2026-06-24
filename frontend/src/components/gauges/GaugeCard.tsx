@@ -7,13 +7,14 @@ interface Props {
   thresholdLow?: number;
   colorOk?: string;
   colorCrit?: string;
+  hasDrift?: boolean;   // true → affiche ↓ dérive descendante détectée sur cette variable
 }
 
 function arcPath(pct: number, r: number): string {
   const angle = pct * 180 - 180;
-  const rad = (angle * Math.PI) / 180;
-  const x = 60 + r * Math.cos(rad);
-  const y = 60 + r * Math.sin(rad);
+  const rad   = (angle * Math.PI) / 180;
+  const x     = 60 + r * Math.cos(rad);
+  const y     = 60 + r * Math.sin(rad);
   const large = pct > 0.5 ? 1 : 0;
   return `M ${60 - r} 60 A ${r} ${r} 0 ${large} 1 ${x.toFixed(2)} ${y.toFixed(2)}`;
 }
@@ -25,13 +26,14 @@ export function GaugeCard({
   min,
   max,
   thresholdLow,
-  colorOk = "#2D7A3A",
+  colorOk   = "#2D7A3A",
   colorCrit = "#C62828",
+  hasDrift  = false,
 }: Props) {
-  const pct = value === null ? 0 : Math.max(0, Math.min(1, (value - min) / (max - min)));
+  const pct   = value === null ? 0 : Math.max(0, Math.min(1, (value - min) / (max - min)));
   const isCrit = thresholdLow !== undefined && value !== null && value < thresholdLow;
-  const color = value === null ? "#9CA3AF" : isCrit ? colorCrit : colorOk;
-  const r = 46;
+  const color  = value === null ? "#9CA3AF" : isCrit ? colorCrit : colorOk;
+  const r      = 46;
 
   return (
     <div className="bg-panel rounded-2xl shadow-card p-3 sm:p-4 flex flex-col items-center gap-1.5 w-full">
@@ -46,15 +48,26 @@ export function GaugeCard({
         </text>
       </svg>
 
-      <span className="text-xs font-semibold text-primary-700 tracking-wide uppercase text-center">
-        {label}
-      </span>
+      {/* Label + flèche de dérive */}
+      <div className="flex items-center gap-1">
+        <span className="text-xs font-semibold text-primary-700 tracking-wide uppercase text-center">
+          {label}
+        </span>
+        {hasDrift && (
+          <span
+            title="Dérive descendante détectée sur les 20 dernières mesures"
+            className="text-sm font-black text-amber-500 leading-none"
+          >
+            ↓
+          </span>
+        )}
+      </div>
 
       <span className={[
         "text-[10px] font-semibold px-2 py-0.5 rounded-full",
-        value === null     ? "bg-gray-100 text-gray-400"
-        : isCrit           ? "bg-red-100 text-danger-600"
-                           : "bg-green-100 text-primary-600",
+        value === null ? "bg-gray-100 text-gray-400"
+        : isCrit       ? "bg-red-100 text-danger-600"
+                       : "bg-green-100 text-primary-600",
       ].join(" ")}>
         {value === null ? "N/A" : isCrit ? "Critique" : "Normal"}
       </span>

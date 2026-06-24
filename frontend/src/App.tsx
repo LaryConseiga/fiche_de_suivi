@@ -7,6 +7,7 @@ import { History } from "@/pages/History";
 import { Alerts } from "@/pages/Alerts";
 import { Reports } from "@/pages/Reports";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { GeminiToast } from "@/components/alerts/GeminiToast";
 
 export function App() {
   useWebSocket();
@@ -16,6 +17,7 @@ export function App() {
       <Header />
       <Sidebar />
       <BottomNav />
+      <GeminiToast />
 
       {/*
         Mobile      : pas de sidebar → pl-0, espace bas pour BottomNav → pb-16
