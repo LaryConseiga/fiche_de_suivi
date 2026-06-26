@@ -14,7 +14,8 @@ interface Props {
   data: Mesure[];
 }
 
-function fmt(ts: string) {
+function fmt(ts: string | undefined) {
+  if (!ts) return "";
   return new Date(ts).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 }
 
