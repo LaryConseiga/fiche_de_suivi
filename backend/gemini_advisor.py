@@ -160,7 +160,7 @@ def _run_with_timeout(event_type: str, context: dict, socketio) -> None:
         print(f"[Gemini] Timeout {TIMEOUT_SECONDES}s ({event_type}) — ignoré")
         return
 
-    print(f"[Gemini] {event_type}: {result[0][:80]}…")
+    print(f"[Gemini] {event_type}: {result[0][:80]}...")
     socketio.emit("gemini_conseil", {
         "event_type":   event_type,
         "conseil":      result[0],

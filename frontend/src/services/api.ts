@@ -21,6 +21,12 @@ export const api = {
   resolveAlert: (id: number) =>
     http.patch(`/alerts/${id}/resolve`).then((r) => r.data),
 
+  deleteResolved: () =>
+    http.delete("/alerts/resolved").then((r) => r.data),
+
+  deleteAllAlerts: () =>
+    http.delete("/alerts").then((r) => r.data),
+
   nettoyage: () =>
     http.post<{ ok: boolean; cycles_effectues: number }>("/nettoyage").then((r) => r.data),
 

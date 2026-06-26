@@ -65,7 +65,7 @@ def calcul_score_risque(data: dict, cycles: int) -> dict:
     else:
         niveau = "CRITIQUE"
 
-    print(f"[Risk] Score composite : {score}/10 → {niveau}")
+    print(f"[Risk] Score composite : {score}/10 -> {niveau}")
     return {"score": score, "niveau": niveau}
 
 

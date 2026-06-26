@@ -15,5 +15,17 @@ export function useAlerts() {
     resolve(id);
   };
 
-  return { resolveAlert };
+  const deleteResolved = async () => {
+    await api.deleteResolved();
+    setAll(await api.getAlerts("all"));
+    setActive(await api.getAlerts("active"));
+  };
+
+  const deleteAllAlerts = async () => {
+    await api.deleteAllAlerts();
+    setAll([]);
+    setActive([]);
+  };
+
+  return { resolveAlert, deleteResolved, deleteAllAlerts };
 }

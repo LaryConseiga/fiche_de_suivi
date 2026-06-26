@@ -25,11 +25,11 @@ export function Dashboard() {
     <div className="flex flex-col gap-4 sm:gap-5">
       <h2 className="text-base font-bold text-primary-800">Mesures temps réel</h2>
 
-      {/* ── Indice de risque composite — indicateur principal ─────────────── */}
-      <RiskGauge score={score} niveau={niveauRisque} />
-
-      {/* ── Encart cycles et nettoyage mâchoires ─────────────────────────── */}
-      <CyclePanel />
+      {/* ── Indice de risque + cycles : côte à côte sur xl ──────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5 items-start">
+        <RiskGauge score={score} niveau={niveauRisque} />
+        <CyclePanel />
+      </div>
 
       {/* ── Jauges capteurs : 2 colonnes mobile, 4 colonnes desktop ─────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -89,13 +89,13 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* ── Alertes actives : seuils + dérives distingués visuellement ───── */}
-      <AlertPanel />
-
-      {/* ── Courbes historiques sur 8h ────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TemperatureChart data={history} />
-        <PressureChart data={history} />
+      {/* ── Alertes + graphiques : 2 colonnes sur xl ─────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <AlertPanel />
+        <div className="flex flex-col gap-4">
+          <TemperatureChart data={history} />
+          <PressureChart data={history} />
+        </div>
       </div>
 
       {/* ── Outil responsable qualité — discret, en bas de page ─────────── */}

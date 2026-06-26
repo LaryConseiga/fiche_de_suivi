@@ -8,9 +8,11 @@ services:
     envVars:
       - key: DEMO_MODE
         value: "true"
+      - key: PYTHONIOENCODING
+        value: "utf-8"
       - key: GEMINI_API_KEY
-        sync: false          # à saisir dans le dashboard Render
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        sync: false          # ex: https://innofaso.vercel.app
+        sync: false

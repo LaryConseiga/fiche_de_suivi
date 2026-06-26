@@ -5,13 +5,34 @@ import { AlertBadge } from "@/components/alerts/AlertBadge";
 export function Alerts() {
   const all = useAlertStore((s) => s.all);
   const active = useAlertStore((s) => s.active);
-  const { resolveAlert } = useAlerts();
+  const { resolveAlert, deleteResolved, deleteAllAlerts } = useAlerts();
+  const resolved = all.filter((a) => a.statut === "resolue");
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="text-base font-bold text-primary-800 mb-1">Gestion des alertes</h2>
-        <p className="text-xs text-gray-400">{active.length} active(s) · {all.length} au total</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-base font-bold text-primary-800 mb-1">Gestion des alertes</h2>
+          <p className="text-xs text-gray-400">{active.length} active(s) · {all.length} au total</p>
+        </div>
+        <div className="flex gap-2">
+          {resolved.length > 0 && (
+            <button
+              onClick={deleteResolved}
+              className="text-xs bg-orange-50 text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-100 transition-colors"
+            >
+              Purger résolues ({resolved.length})
+            </button>
+          )}
+          {all.length > 0 && (
+            <button
+              onClick={deleteAllAlerts}
+              className="text-xs bg-red-50 text-red-600 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-100 transition-colors"
+            >
+              Tout supprimer ({all.length})
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stat cards */}

@@ -31,7 +31,7 @@ _running = False
 def _boucle_simulation(socketio):
     global _running
     tick = 0
-    print("[Simulator] ▶ Mode démo actif — simulation des capteurs (1 mesure/s)")
+    print("[Simulator] Mode demo actif - simulation des capteurs (1 mesure/s)")
 
     while _running:
         tick += 1

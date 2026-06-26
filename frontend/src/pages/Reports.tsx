@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, Info } from "lucide-react";
+import { Download } from "lucide-react";
 import { api } from "@/services/api";
 
 export function Reports() {
@@ -78,18 +78,6 @@ export function Reports() {
         </div>
       </div>
 
-      <div className="bg-white border border-gold-400 rounded-2xl p-4 max-w-md">
-        <div className="flex items-center gap-1.5 mb-1">
-          <Info size={13} className="text-gold-500" />
-          <h4 className="text-xs font-semibold text-gold-600">Contenu du fichier</h4>
-        </div>
-        <p className="text-xs text-gray-600">
-          Colonnes : <span className="font-mono text-primary-700">id · timestamp · temperature · pression · eclaboussure · humidite</span>
-        </p>
-        <p className="text-xs text-gray-500 mt-1">
-          Séparateur virgule · Encodage UTF-8 · Tri chronologique
-        </p>
-      </div>
     </div>
   );
 }

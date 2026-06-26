@@ -25,7 +25,7 @@ export function App() {
         Desktop lg  : sidebar 208px → pl-52
       */}
       <main className="pt-14 pb-16 sm:pb-0 pl-0 sm:pl-16 lg:pl-52 min-h-screen bg-surface">
-        <div className="p-4 sm:p-5 max-w-5xl">
+        <div className="p-4 sm:p-6 w-full max-w-7xl mx-auto">
           <Routes>
             <Route path="/"        element={<Dashboard />} />
             <Route path="/history" element={<History />} />

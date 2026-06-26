@@ -36,3 +36,15 @@ def resolve_alerte(alerte_id: int):
         conn.execute(
             "UPDATE alertes SET statut = 'resolue' WHERE id = ?", (alerte_id,)
         )
+
+
+def delete_resolved() -> int:
+    with get_db() as conn:
+        cur = conn.execute("DELETE FROM alertes WHERE statut = 'resolue'")
+        return cur.rowcount
+
+
+def delete_all() -> int:
+    with get_db() as conn:
+        cur = conn.execute("DELETE FROM alertes")
+        return cur.rowcount
