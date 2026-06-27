@@ -1,5 +1,5 @@
 """
-Conseiller IA Gemini 2.5 Flash-Lite — analyse contextuelle des événements machine.
+Conseiller IA Groq (llama-3.1-8b-instant) — analyse contextuelle des événements machine.
 
 Déclenchement automatique sur :
   - Changement de zone de risque (NORMAL / SURVEILLANCE / CRITIQUE)
@@ -73,10 +73,6 @@ _lock                = threading.Lock()
 # ── Point d'entrée unique ────────────────────────────────────────────────────
 
 def check_and_notify(payload: dict, drift_result: dict, socketio) -> None:
-    """
-    Appelé après chaque mesure du pipeline.
-    Détecte les événements significatifs et déclenche les conseils Gemini.
-    """
     global _derniere_zone
 
     niveau_actuel = payload.get("niveau_risque", "NORMAL")
@@ -88,18 +84,15 @@ def check_and_notify(payload: dict, drift_result: dict, socketio) -> None:
 
     ctx = _build_context(payload, drift_result)
 
-    # ── Changement de zone de risque ────────────────────────────────────────
     if zone_precedente is not None and niveau_actuel != zone_precedente:
         if niveau_actuel == "NORMAL":
             _notify("retour_normal", ctx, socketio)
         else:
             _notify("score_zone_change", ctx, socketio)
 
-    # ── Dérive progressive ───────────────────────────────────────────────────
     if drift_result.get("drift_temp") or drift_result.get("drift_pression"):
         _notify("derive_detectee", ctx, socketio)
 
-    # ── Cycles élevés ────────────────────────────────────────────────────────
     if cycles_count > 700:
         _notify("cycles_eleves", ctx, socketio)
 
@@ -129,22 +122,23 @@ def _run_with_timeout(event_type: str, context: dict, socketio) -> None:
 
     def _call():
         try:
-            api_key = os.getenv("GEMINI_API_KEY", "")
+            api_key = os.getenv("GROQ_API_KEY", "")
             if not api_key:
-                error[0] = "GEMINI_API_KEY absente — conseil IA désactivé"
+                error[0] = "GROQ_API_KEY absente — conseil IA désactivé"
                 return
-            from google import genai
-            from google.genai import types
-            client   = genai.Client(api_key=api_key)
-            prompt   = _build_prompt(event_type, context)
-            response = client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_PROMPT,
-                ),
+            from groq import Groq
+            client = Groq(api_key=api_key)
+            prompt = _build_prompt(event_type, context)
+            response = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user",   "content": prompt},
+                ],
+                max_tokens=30,
+                temperature=0.3,
             )
-            result[0] = response.text.strip()
+            result[0] = response.choices[0].message.content.strip()
         except Exception as exc:
             error[0] = str(exc)
 
@@ -153,18 +147,18 @@ def _run_with_timeout(event_type: str, context: dict, socketio) -> None:
     t.join(timeout=TIMEOUT_SECONDES)
 
     if error[0]:
-        print(f"[Gemini] Erreur ({event_type}): {error[0]}")
+        print(f"[Groq] Erreur ({event_type}): {error[0]}")
         return
 
     if result[0] is None:
-        print(f"[Gemini] Timeout {TIMEOUT_SECONDES}s ({event_type}) — ignoré")
+        print(f"[Groq] Timeout {TIMEOUT_SECONDES}s ({event_type}) — ignoré")
         return
 
-    print(f"[Gemini] {event_type}: {result[0][:80]}...")
+    print(f"[Groq] {event_type}: {result[0][:80]}")
     socketio.emit("gemini_conseil", {
-        "event_type":   event_type,
-        "conseil":      result[0],
-        "timestamp":    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "event_type":    event_type,
+        "conseil":       result[0],
+        "timestamp":     datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "niveau_risque": context.get("niveau_risque", "NORMAL"),
     })
 
@@ -181,11 +175,6 @@ def _build_context(payload: dict, drift_result: dict) -> dict:
 
 
 def _build_prompt(event_type: str, ctx: dict) -> str:
-    """
-    Message utilisateur minimaliste — le system prompt INNO-ALERT porte
-    toutes les règles de format (10 mots max, impératif, etc.).
-    On envoie uniquement les faits bruts + le type d'événement.
-    """
     T      = ctx.get("temperature",  "?")
     P      = ctx.get("pression",     "?")
     score  = ctx.get("score",        "?")
