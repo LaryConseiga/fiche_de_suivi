@@ -10,7 +10,7 @@ export function getSocket(): Socket {
   if (!socket) {
     socket = io(BACKEND || "/", {
       path: "/socket.io",
-      transports: ["websocket"],
+      transports: ["polling", "websocket"],
       reconnectionDelay: 2000,
       reconnectionAttempts: Infinity,
     });
