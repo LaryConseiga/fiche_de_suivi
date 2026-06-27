@@ -138,7 +138,7 @@ def _run_with_timeout(event_type: str, context: dict, socketio) -> None:
             client   = genai.Client(api_key=api_key)
             prompt   = _build_prompt(event_type, context)
             response = client.models.generate_content(
-                model="gemini-2.0-flash-lite",
+                model="gemini-1.5-flash",
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=SYSTEM_PROMPT,
