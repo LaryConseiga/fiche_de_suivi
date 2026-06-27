@@ -15,10 +15,12 @@ class Config:
     PRESSION_MIN = 3.5
     ECLABOUSSURE_TRIGGER = 1
 
-    # En production : CORS_ORIGINS=https://your-app.vercel.app
+    # CORS_ORIGINS=*            → tout autoriser (dev/demo)
+    # CORS_ORIGINS=https://a.vercel.app,https://b.vercel.app → liste
     _cors_env = os.getenv("CORS_ORIGINS", "")
-    CORS_ORIGINS = (
-        [o.strip() for o in _cors_env.split(",") if o.strip()]
-        if _cors_env
-        else ["http://localhost:5173", "http://localhost:3000"]
-    )
+    if _cors_env == "*":
+        CORS_ORIGINS = "*"
+    elif _cors_env:
+        CORS_ORIGINS = [o.strip() for o in _cors_env.split(",") if o.strip()]
+    else:
+        CORS_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]
