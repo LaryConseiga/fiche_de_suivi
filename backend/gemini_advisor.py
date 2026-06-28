@@ -111,11 +111,7 @@ def _notify(event_type: str, context: dict, socketio) -> None:
             return
         _cooldowns[event_type] = now
 
-    threading.Thread(
-        target=_appel_groq,
-        args=(event_type, context, socketio),
-        daemon=True,
-    ).start()
+    socketio.start_background_task(_appel_groq, event_type, context, socketio)
 
 
 # ── Appel API Groq via requests (compatible eventlet) ───────────────────────
