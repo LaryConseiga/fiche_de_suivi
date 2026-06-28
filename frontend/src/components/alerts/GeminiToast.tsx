@@ -14,17 +14,8 @@ export function GeminiToast() {
 
   useEffect(() => {
     if (!toast) { setVisible(false); return; }
-
     const showTimer = setTimeout(() => setVisible(true), 20);
-    const fadeTimer = setTimeout(() => setVisible(false), 5700);
-    const hideTimer = setTimeout(() => dismiss(), 6000);
-
-    return () => {
-      clearTimeout(showTimer);
-      clearTimeout(fadeTimer);
-      clearTimeout(hideTimer);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => clearTimeout(showTimer);
   }, [toast?.timestamp]);
 
   if (!toast) return null;
@@ -34,13 +25,21 @@ export function GeminiToast() {
       className={[
         "fixed top-16 left-1/2 -translate-x-1/2 z-50",
         "max-w-sm w-[90vw] px-4 py-3 rounded-xl shadow-lg",
-        "text-white text-sm font-semibold text-center",
+        "text-white text-sm font-semibold",
+        "flex items-center gap-3",
         "transition-opacity duration-300",
         bgColor(toast.event_type, toast.niveau_risque),
         visible ? "opacity-100" : "opacity-0",
       ].join(" ")}
     >
-      {toast.conseil}
+      <span className="flex-1 text-center">{toast.conseil}</span>
+      <button
+        onClick={dismiss}
+        className="text-white/70 hover:text-white text-lg leading-none shrink-0"
+        aria-label="Fermer"
+      >
+        ×
+      </button>
     </div>
   );
 }
