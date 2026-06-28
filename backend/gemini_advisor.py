@@ -1,5 +1,5 @@
 """
-Conseiller IA Groq (llama-3.1-8b-instant) — analyse contextuelle des événements machine.
+Conseiller IA Groq (llama-3.1-8b-instant) via API REST + requests (compatible eventlet).
 
 Déclenchement automatique sur :
   - Changement de zone de risque (NORMAL / SURVEILLANCE / CRITIQUE)
@@ -13,6 +13,10 @@ Le résultat est diffusé via WebSocket sous l'événement "gemini_conseil".
 import os
 import threading
 from datetime import datetime
+
+import requests
+
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 SYSTEM_PROMPT = """\
 Tu es INNO-ALERT, un assistant de surveillance industrielle \
@@ -108,56 +112,53 @@ def _notify(event_type: str, context: dict, socketio) -> None:
         _cooldowns[event_type] = now
 
     threading.Thread(
-        target=_run_with_timeout,
+        target=_appel_groq,
         args=(event_type, context, socketio),
         daemon=True,
     ).start()
 
 
-# ── Appel API avec timeout 10 s ──────────────────────────────────────────────
+# ── Appel API Groq via requests (compatible eventlet) ───────────────────────
 
-def _run_with_timeout(event_type: str, context: dict, socketio) -> None:
-    result: list = [None]
-    error:  list = [None]
+def _appel_groq(event_type: str, context: dict, socketio) -> None:
+    api_key = os.getenv("GROQ_API_KEY", "")
+    if not api_key:
+        print(f"[Groq] GROQ_API_KEY absente — conseil IA désactivé")
+        return
 
-    def _call():
-        try:
-            api_key = os.getenv("GROQ_API_KEY", "")
-            if not api_key:
-                error[0] = "GROQ_API_KEY absente — conseil IA désactivé"
-                return
-            from groq import Groq
-            client = Groq(api_key=api_key)
-            prompt = _build_prompt(event_type, context)
-            response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[
+    prompt = _build_prompt(event_type, context)
+
+    try:
+        response = requests.post(
+            GROQ_URL,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "llama-3.1-8b-instant",
+                "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user",   "content": prompt},
                 ],
-                max_tokens=30,
-                temperature=0.3,
-            )
-            result[0] = response.choices[0].message.content.strip()
-        except Exception as exc:
-            error[0] = str(exc)
-
-    t = threading.Thread(target=_call, daemon=True)
-    t.start()
-    t.join(timeout=TIMEOUT_SECONDES)
-
-    if error[0]:
-        print(f"[Groq] Erreur ({event_type}): {error[0]}")
-        return
-
-    if result[0] is None:
+                "max_tokens": 30,
+                "temperature": 0.3,
+            },
+            timeout=TIMEOUT_SECONDES,
+        )
+        response.raise_for_status()
+        conseil = response.json()["choices"][0]["message"]["content"].strip()
+    except requests.Timeout:
         print(f"[Groq] Timeout {TIMEOUT_SECONDES}s ({event_type}) — ignoré")
         return
+    except Exception as exc:
+        print(f"[Groq] Erreur ({event_type}): {exc}")
+        return
 
-    print(f"[Groq] {event_type}: {result[0][:80]}")
+    print(f"[Groq] {event_type}: {conseil}")
     socketio.emit("gemini_conseil", {
         "event_type":    event_type,
-        "conseil":       result[0],
+        "conseil":       conseil,
         "timestamp":     datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "niveau_risque": context.get("niveau_risque", "NORMAL"),
     })
