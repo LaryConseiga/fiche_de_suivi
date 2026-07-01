@@ -1,20 +1,26 @@
 from datetime import datetime
 from config import Config
-from models.alerte import insert_alerte
+from models.alerte import insert_alerte, get_active
+
+MAX_ALERTES_ACTIVES = 5
+COOLDOWN_SECONDES   = 60
+
+_cooldowns: dict = {}
 
 
 def check_and_fire(data: dict, socketio) -> list:
-    """
-    Vérifie les seuils critiques et émet des alertes de type SEUIL si franchis.
-    Comportement inchangé par rapport à la version initiale — seuls statut,
-    timestamp et type_alerte sont ajoutés aux payloads pour le frontend.
-    """
     triggered = []
+
+    # Ne pas générer de nouvelles alertes si le plafond est atteint
+    if len(get_active()) >= MAX_ALERTES_ACTIVES:
+        return triggered
+
     T   = data.get("T")
     P   = data.get("P")
     ecl = data.get("ecl")
+    maintenant = datetime.now()
 
-    if T is not None and T < Config.TEMP_MIN:
+    if T is not None and T < Config.TEMP_MIN and _peut_emettre("temperature", maintenant):
         alerte_id = insert_alerte("temperature", T, Config.TEMP_MIN, type_alerte="SEUIL")
         alert = {
             "id":          alerte_id,
@@ -25,12 +31,12 @@ def check_and_fire(data: dict, socketio) -> list:
             "seuil":       Config.TEMP_MIN,
             "niveau":      "critique",
             "statut":      "active",
-            "timestamp":   datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "timestamp":   maintenant.strftime("%Y-%m-%d %H:%M:%S"),
         }
         triggered.append(alert)
         socketio.emit("alerte", alert)
 
-    if P is not None and P < Config.PRESSION_MIN:
+    if P is not None and P < Config.PRESSION_MIN and _peut_emettre("pression", maintenant):
         alerte_id = insert_alerte("pression", P, Config.PRESSION_MIN, type_alerte="SEUIL")
         alert = {
             "id":          alerte_id,
@@ -41,12 +47,12 @@ def check_and_fire(data: dict, socketio) -> list:
             "seuil":       Config.PRESSION_MIN,
             "niveau":      "alerte",
             "statut":      "active",
-            "timestamp":   datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "timestamp":   maintenant.strftime("%Y-%m-%d %H:%M:%S"),
         }
         triggered.append(alert)
         socketio.emit("alerte", alert)
 
-    if ecl == Config.ECLABOUSSURE_TRIGGER:
+    if ecl == Config.ECLABOUSSURE_TRIGGER and _peut_emettre("eclaboussure", maintenant):
         alerte_id = insert_alerte("eclaboussure", 1, 0, type_alerte="SEUIL")
         alert = {
             "id":          alerte_id,
@@ -57,9 +63,17 @@ def check_and_fire(data: dict, socketio) -> list:
             "seuil":       0,
             "niveau":      "critique",
             "statut":      "active",
-            "timestamp":   datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "timestamp":   maintenant.strftime("%Y-%m-%d %H:%M:%S"),
         }
         triggered.append(alert)
         socketio.emit("alerte", alert)
 
     return triggered
+
+
+def _peut_emettre(type_: str, maintenant: datetime) -> bool:
+    derniere = _cooldowns.get(type_)
+    if derniere and (maintenant - derniere).total_seconds() < COOLDOWN_SECONDES:
+        return False
+    _cooldowns[type_] = maintenant
+    return True

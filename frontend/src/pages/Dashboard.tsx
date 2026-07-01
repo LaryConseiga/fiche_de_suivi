@@ -6,7 +6,6 @@ import { TemperatureChart } from "@/components/charts/TemperatureChart";
 import { PressureChart } from "@/components/charts/PressureChart";
 import { AlertPanel } from "@/components/alerts/AlertPanel";
 import { RiskGauge } from "@/components/risk/RiskGauge";
-import { CyclePanel } from "@/components/cycles/CyclePanel";
 import { FuiteButton } from "@/components/fuites/FuiteButton";
 
 export function Dashboard() {
@@ -25,11 +24,8 @@ export function Dashboard() {
     <div className="flex flex-col gap-4 sm:gap-5">
       <h2 className="text-base font-bold text-primary-800">Mesures temps réel</h2>
 
-      {/* ── Indice de risque + cycles : côte à côte sur xl ──────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5 items-start">
-        <RiskGauge score={score} niveau={niveauRisque} />
-        <CyclePanel />
-      </div>
+      {/* ── Indice de risque ─────────────────────────────────────────────── */}
+      <RiskGauge score={score} niveau={niveauRisque} />
 
       {/* ── Jauges capteurs : 2 colonnes mobile, 4 colonnes desktop ─────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
